@@ -1,6 +1,6 @@
 /*
- *  modifier: Honrun
- *  date:     2021/12/22 17:00
+ *  author: Honrun
+ *  date:   2021/12/25 11:30
  */
 #include "stdint.h"
 #include "stdio.h"
@@ -11,10 +11,10 @@
 
 
 QueueType g_TypeQueueKeyInput = {0};
-uint8_t st_ucQueueKeyInputBuff[QUEUE_KEY_INPUT_LENGTH + 4] = {0};
+static uint8_t st_ucQueueKeyInputBuff[QUEUE_KEY_INPUT_LENGTH + 4] = {0};
 
 QueueType g_TypeQueueKeyOutput = {0};
-uint8_t st_ucQueueKeyOutputBuff[QUEUE_KEY_OUTPUT_LENGTH + 4] = {0};
+static uint8_t st_ucQueueKeyOutputBuff[QUEUE_KEY_OUTPUT_LENGTH + 4] = {0};
 
 
 
@@ -39,9 +39,9 @@ enumQueueState enumQueueInit(void)
 }
 
 /*
- * Return:      ´´½¨ÊÇ·ñ³É¹¦×´Ì¬Öµ
- * Parameters:  *pTypeQueue: ¶ÓÁÐ½á¹¹ÌåÖ¸Õë; pucName: ¶ÓÁÐÃû³Æ; iLength: ¶ÓÁÐ³¤¶È
- * Description: ³õÊ¼»¯¶ÓÁÐ
+ * Return:      åˆ›å»ºæ˜¯å¦æˆåŠŸçŠ¶æ€å€¼
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ; pucName: é˜Ÿåˆ—åç§°; iLength: é˜Ÿåˆ—é•¿åº¦
+ * Description: åˆå§‹åŒ–é˜Ÿåˆ—
  */
 enumQueueState enumQueueCreate(QueueType *pTypeQueue, char *pcName, uint8_t *pucBuff, int32_t iLength)
 {
@@ -62,15 +62,15 @@ enumQueueState enumQueueCreate(QueueType *pTypeQueue, char *pcName, uint8_t *puc
 }
 
 /*
- * Return:      ¶ÓÁÐ»º´æ¿ÕÂú×´Ì¬
- * Parameters:  *pTypeQueue: ¶ÓÁÐ½á¹¹ÌåÖ¸Õë
- * Description: »ñÈ¡¶ÓÁÐ»º´æ¿ÕÂú×´Ì¬
+ * Return:      é˜Ÿåˆ—ç¼“å­˜ç©ºæ»¡çŠ¶æ€
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ
+ * Description: èŽ·å–é˜Ÿåˆ—ç¼“å­˜ç©ºæ»¡çŠ¶æ€
  */
 enumQueueState enumQueueGetState(QueueType *pTypeQueue)
 {
     uint8_t * pNow = NULL;
 
-    if(pTypeQueue == NULL)
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
       return queueNull;
 
     if(pTypeQueue->pReadFrom == pTypeQueue->pWriteTo)
@@ -87,12 +87,12 @@ enumQueueState enumQueueGetState(QueueType *pTypeQueue)
 
 /*
  * Return:      void
- * Parameters:  *pTypeQueue: ¶ÓÁÐ½á¹¹ÌåÖ¸Õë; ucStateFlag: ¿ÕÂú×´Ì¬
- * Description: ÉèÖÃ¶ÓÁÐ»º´æ¿ÕÂú×´Ì¬
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ; ucStateFlag: ç©ºæ»¡çŠ¶æ€
+ * Description: è®¾ç½®é˜Ÿåˆ—ç¼“å­˜ç©ºæ»¡çŠ¶æ€
  */
 enumQueueState enumQueueSetState(QueueType *pTypeQueue, enumQueueState enumState)
 {
-    if(pTypeQueue == NULL)
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
         return queueNull;
 
     switch(enumState)
@@ -109,75 +109,125 @@ enumQueueState enumQueueSetState(QueueType *pTypeQueue, enumQueueState enumState
 }
 
 /*
- * Return:      ¶ÓÁÐ»º´æÖÐÓÐÐ§Êý¾Ý³¤¶È
- * Parameters:  *pTypeQueue: ¶ÓÁÐ½á¹¹ÌåÖ¸Õë
- * Description: »ñÈ¡¶ÓÁÐ»º´æÖÐÓÐÐ§Êý¾Ý³¤¶È
+ * Return:      æŸ¥æ‰¾åˆ°çš„æ•°æ®ä½ç½®
+ * Parameters:
+ * Description: memrchræ›¿ä»£å‡½æ•°
  */
-int32_t iQueueGetLengthOfOccupy(QueueType *pTypeQueue, uint8_t ucByte)
+static void *vQueueMemrchr(void *pvHandle, uint8_t ucValue, int32_t iCount)
+{
+    uint8_t *pucCheck = pvHandle;
+
+    pucCheck += iCount - 1;
+
+    while((iCount--) > 0)
+    {
+        if(*pucCheck == ucValue)
+            return pucCheck;
+
+        --pucCheck;
+    }
+
+    return NULL;
+}
+
+/*
+ * Return:      é˜Ÿåˆ—ç¼“å­˜ä¸­æœ‰æ•ˆæ•°æ®é•¿åº¦
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ
+ * Description: èŽ·å–é˜Ÿåˆ—ç¼“å­˜ä¸­æœ‰æ•ˆæ•°æ®é•¿åº¦
+ */
+int32_t iQueueGetLengthOfOccupy(QueueType *pTypeQueue)
 {
     int32_t iLength = 0;
-    char *pcHead = NULL;
 
-    if(pTypeQueue == NULL)
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
         return 0;
 
-    /* ÅÐ¶ÏÊÇ·ñÐèÒª½áÎ²·ûºÅ£¬ÒÔ¼°ÊÇ·ñÓÐ½áÎ²·ûºÅ */
-    if((ucByte != 0) &&
-       ((memchr(pTypeQueue->pReadFrom, ucByte, pTypeQueue->pTail - pTypeQueue->pReadFrom) == 0) &&
-        (memchr(pTypeQueue->pHead, ucByte, pTypeQueue->pWriteTo - pTypeQueue->pHead) == 0)))
+    if(pTypeQueue->pReadFrom <= pTypeQueue->pWriteTo)
+        iLength = pTypeQueue->pWriteTo - pTypeQueue->pReadFrom;
+    else
+        iLength = pTypeQueue->length - (pTypeQueue->pReadFrom - pTypeQueue->pWriteTo);
+
+    return iLength;
+}
+
+/*
+ * Return:      é˜Ÿåˆ—ç¼“å­˜ä¸­æœ‰æ•ˆæ•°æ®é•¿åº¦
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ; ucByte: æŒ‡å®šçš„æœ‰æ•ˆå­—èŠ‚
+ * Description: èŽ·å–é˜Ÿåˆ—ç¼“å­˜ä¸­æœ‰æ•ˆæ•°æ®é•¿åº¦ï¼Œéœ€è¦æœ‰æŒ‡å®šçš„æœ‰æ•ˆå­—èŠ‚
+ */
+int32_t iQueueGetLengthOfOccupyNeed(QueueType *pTypeQueue, uint8_t ucByte)
+{
+    int32_t iLength = 0;
+    uint8_t *pucHead = NULL;
+
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
         return 0;
 
-    if(ucByte != 0)
+    /* pHead|-------pReadFrom===============pWriteTo-------------|pTail */
+    if(pTypeQueue->pReadFrom <= pTypeQueue->pWriteTo)
     {
-        if((pcHead = strrchr((char *)(pTypeQueue->pReadFrom), ucByte)) != NULL)
-            iLength = ((uint8_t *)pcHead - pTypeQueue->pReadFrom) + 1;
-
-        else if((pcHead = strrchr((char *)(pTypeQueue->pHead), ucByte)) != NULL)
-            iLength = ((uint8_t *)pcHead - pTypeQueue->pHead) + (pTypeQueue->pTail - pTypeQueue->pReadFrom) + 1;
+        if((pucHead = vQueueMemrchr(pTypeQueue->pReadFrom, ucByte, pTypeQueue->pWriteTo - pTypeQueue->pReadFrom)) != NULL)
+            iLength = (pucHead - pTypeQueue->pReadFrom) + 1;
     }
+    /* pHead|=======pWriteTo---------------pReadFrom=============|pTail */
     else
     {
-        if(pTypeQueue->pReadFrom <= pTypeQueue->pWriteTo)
-            iLength = pTypeQueue->pWriteTo - pTypeQueue->pReadFrom;
-        else
-            iLength = pTypeQueue->length - (pTypeQueue->pReadFrom - pTypeQueue->pWriteTo);
+        /* pHead|=======|pWriteTo */
+        if((pucHead = vQueueMemrchr(pTypeQueue->pHead, ucByte, pTypeQueue->pWriteTo - pTypeQueue->pHead)) != NULL)
+            iLength = (pucHead - pTypeQueue->pHead) + (pTypeQueue->pTail - pTypeQueue->pReadFrom) + 1;
+
+        /* pReadFrom|=============|pTail */
+        else if((pucHead = vQueueMemrchr(pTypeQueue->pReadFrom, ucByte, pTypeQueue->pTail - pTypeQueue->pReadFrom)) != NULL)
+            iLength = (pucHead - pTypeQueue->pReadFrom) + 1;
     }
 
     return iLength;
 }
 
 /*
- * Return:      ¶ÓÁÐ»º´æÖÐµ½ÏÂÒ»¸ö·Ö¸ô·ûµÄÓÐÐ§Êý¾Ý³¤¶È
- * Parameters:  *pTypeQueue: ¶ÓÁÐ½á¹¹ÌåÖ¸Õë
- * Description: »ñÈ¡¶ÓÁÐ»º´æÖÐÓÐÐ§Êý¾Ý³¤¶È
+ * Return:      é˜Ÿåˆ—ç¼“å­˜ä¸­åˆ°ä¸‹ä¸€ä¸ªåˆ†éš”ç¬¦çš„æœ‰æ•ˆæ•°æ®é•¿åº¦
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ
+ * Description: èŽ·å–é˜Ÿåˆ—ç¼“å­˜ä¸­æœ‰æ•ˆæ•°æ®é•¿åº¦
  */
 int32_t iQueueGetLengthOfSeparetor(QueueType *pTypeQueue, uint8_t ucByte)
 {
     int32_t iLength = 0;
     uint8_t *pucHead = NULL;
 
-    if(pTypeQueue == NULL)
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
         return 0;
 
-    if((pucHead = memchr(pTypeQueue->pReadFrom, ucByte, pTypeQueue->pTail - pTypeQueue->pReadFrom)) != NULL)
-        iLength = (pucHead - pTypeQueue->pReadFrom) + 1;
+    /* pHead|-------pReadFrom===============pWriteTo-------------|pTail */
+    if(pTypeQueue->pReadFrom <= pTypeQueue->pWriteTo)
+    {
+        if((pucHead = memchr(pTypeQueue->pReadFrom, ucByte, pTypeQueue->pWriteTo - pTypeQueue->pReadFrom)) != NULL)
+            iLength = (pucHead - pTypeQueue->pReadFrom) + 1;
+    }
+    /* pHead|=======pWriteTo---------------pReadFrom=============|pTail */
+    else
+    {
+        /* pReadFrom|=============|pTail */
+        if((pucHead = memchr(pTypeQueue->pReadFrom, ucByte, pTypeQueue->pTail - pTypeQueue->pReadFrom)) != NULL)
+            iLength = (pucHead - pTypeQueue->pReadFrom) + 1;
 
-    else if((pucHead = memchr(pTypeQueue->pHead, ucByte, pTypeQueue->pWriteTo - pTypeQueue->pHead)) != NULL)
-        iLength = (pucHead - pTypeQueue->pHead) + (pTypeQueue->pTail - pTypeQueue->pReadFrom) + 1;
+        /* pHead|=======|pWriteTo */
+        else if((pucHead = memchr(pTypeQueue->pHead, ucByte, pTypeQueue->pWriteTo - pTypeQueue->pHead)) != NULL)
+            iLength = (pucHead - pTypeQueue->pHead) + (pTypeQueue->pTail - pTypeQueue->pReadFrom) + 1;
+    }
 
     return iLength;
 }
 
 /*
- * Return:      ¶ÓÁÐ»º´æÖÐÊ£Óà³¤¶È
- * Parameters:  *pTypeQueue: ¶ÓÁÐ½á¹¹ÌåÖ¸Õë
- * Description: »ñÈ¡¶ÓÁÐ»º´æÖÐÊ£Óà³¤¶È
+ * Return:      é˜Ÿåˆ—ç¼“å­˜ä¸­å‰©ä½™é•¿åº¦
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ
+ * Description: èŽ·å–é˜Ÿåˆ—ç¼“å­˜ä¸­å‰©ä½™é•¿åº¦
  */
 int32_t iQueueGetLengthOfRemaining(QueueType *pTypeQueue)
 {
     int32_t iLength = 0;
 
-    if(pTypeQueue == NULL)
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
         return 0;
 
     if(pTypeQueue->pReadFrom <= pTypeQueue->pWriteTo)
@@ -187,16 +237,17 @@ int32_t iQueueGetLengthOfRemaining(QueueType *pTypeQueue)
 
     return iLength;
 }
+
 /*
- * Return:      ÊÇ·ñÈë¶Ó³É¹¦×´Ì¬
- * Parameters:  *pTypeQueue: ¶ÓÁÐ½á¹¹ÌåÖ¸Õë; ucData: ´ýÈë¶Ó×Ö½ÚÊý¾Ý
- * Description: Èë¶ÓÒ»¸ö×Ö½ÚÊý¾Ý
+ * Return:      æ˜¯å¦å…¥é˜ŸæˆåŠŸçŠ¶æ€
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ; ucData: å¾…å…¥é˜Ÿå­—èŠ‚æ•°æ®
+ * Description: å…¥é˜Ÿä¸€ä¸ªå­—èŠ‚æ•°æ®
  */
 enumQueueState enumQueuePushByte(QueueType *pTypeQueue, uint8_t ucData)
 {
     enumQueueState enumPushState = queueNormal;
 
-    if(pTypeQueue == NULL)
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
         return queueNull;
 
     if(enumQueueGetState(pTypeQueue) == queueFull)
@@ -211,28 +262,28 @@ enumQueueState enumQueuePushByte(QueueType *pTypeQueue, uint8_t ucData)
     *pTypeQueue->pWriteTo++ = ucData;
     pTypeQueue->pWriteTo = ((pTypeQueue->pWriteTo >= pTypeQueue->pTail) ? pTypeQueue->pHead : pTypeQueue->pWriteTo);
 
-    /* ÔÚÒç³öÊ±£¬ÐèÒª°ÑreadÖ¸ÕëÖ¸Ïòµ±Ç°¶ÓÁÐÐÂµÄÄ©Î² */
+    /* åœ¨æº¢å‡ºæ—¶ï¼Œéœ€è¦æŠŠreadæŒ‡é’ˆæŒ‡å‘å½“å‰é˜Ÿåˆ—æ–°çš„æœ«å°¾ */
     if(enumPushState != queueNormal)
     {
         pTypeQueue->pReadFrom = pTypeQueue->pWriteTo + 1;
         pTypeQueue->pReadFrom = ((pTypeQueue->pReadFrom >= pTypeQueue->pTail) ? pTypeQueue->pHead : pTypeQueue->pReadFrom);
     }
 
-    return queueNormal;
+    return enumPushState;
 }
 
 /*
- * Return:      ÊÇ·ñ³ö¶Ó³É¹¦×´Ì¬
- * Parameters:  *pTypeQueue: ¶ÓÁÐ½á¹¹ÌåÖ¸Õë; *pucData: ´ý³ö¶Ó×Ö½ÚÊý¾ÝÖ¸Õë
- * Description: ³ö¶ÓÒ»¸ö×Ö½ÚÊý¾Ý
+ * Return:      æ˜¯å¦å‡ºé˜ŸæˆåŠŸçŠ¶æ€
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ; *pucData: å¾…å‡ºé˜Ÿå­—èŠ‚æ•°æ®æŒ‡é’ˆ
+ * Description: å‡ºé˜Ÿä¸€ä¸ªå­—èŠ‚æ•°æ®
  */
 enumQueueState enumQueuePopByte(QueueType *pTypeQueue, uint8_t *pucData)
 {
-    if(pTypeQueue == NULL)
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
         return queueNull;
 
-    if(enumQueueGetState(pTypeQueue) == queueEmpty)
-        return queueEmpty;
+    if(pTypeQueue->pReadFrom == pTypeQueue->pWriteTo)
+      return queueEmpty;
 
     *pucData = *pTypeQueue->pReadFrom++;
     pTypeQueue->pReadFrom = ((pTypeQueue->pReadFrom >= pTypeQueue->pTail) ? pTypeQueue->pHead : pTypeQueue->pReadFrom);
@@ -241,21 +292,17 @@ enumQueueState enumQueuePopByte(QueueType *pTypeQueue, uint8_t *pucData)
 }
 
 /*
- * Return:      ÊÇ·ñÈë¶Ó³É¹¦×´Ì¬
- * Parameters:  *pTypeQueue: ¶ÓÁÐ½á¹¹ÌåÖ¸Õë; *ppHead: ´ýÈë¶ÓÊý¾Ý»º´æÖ¸Õë; iLength: »º´æ³¤¶È
- * Description: Èë¶ÓÒ»ÏµÁÐÊý¾Ý
+ * Return:      æ˜¯å¦å…¥é˜ŸæˆåŠŸçŠ¶æ€
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ; *ppHead: å¾…å…¥é˜Ÿæ•°æ®ç¼“å­˜æŒ‡é’ˆ; iLength: ç¼“å­˜é•¿åº¦
+ * Description: å…¥é˜Ÿä¸€ç³»åˆ—æ•°æ®
  */
 enumQueueState enumQueuePushDatas(QueueType *pTypeQueue, void *pvBuff, int32_t iLength)
 {
     uint8_t *pucHandle = pvBuff;
     enumQueueState enumPushState = queueNormal;
 
-    if(pTypeQueue == NULL)
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
         return queueNull;
-
-    /* »·ÐÎ¶ÓÁÐ£¬Êµ¼ÊÄÜ¹»Ê¹ÓÃµÄ×î´ó³¤¶È±È³õÊ¼»¯³¤¶ÈÉÙ1£¬¾ßÌåÔ­Àí£¬¿ÉÒÔÍÆÑÝµÃµ½ */
-    if(iLength >= pTypeQueue->length)
-        return queueError;
 
     if(iQueueGetLengthOfRemaining(pTypeQueue) < iLength)
     {
@@ -272,10 +319,37 @@ enumQueueState enumQueuePushDatas(QueueType *pTypeQueue, void *pvBuff, int32_t i
         pTypeQueue->pWriteTo = ((pTypeQueue->pWriteTo >= pTypeQueue->pTail) ? pTypeQueue->pHead : pTypeQueue->pWriteTo);
     }
 
-    /* ÔÚÒç³öÊ±£¬ÐèÒª°ÑreadÖ¸ÕëÖ¸Ïòµ±Ç°¶ÓÁÐÐÂµÄÄ©Î² */
+    /* åœ¨æº¢å‡ºæ—¶ï¼Œéœ€è¦æŠŠreadæŒ‡é’ˆæŒ‡å‘å½“å‰é˜Ÿåˆ—æ–°çš„æœ«å°¾ */
     if(enumPushState != queueNormal)
     {
         pTypeQueue->pReadFrom = pTypeQueue->pWriteTo + 1;
+        pTypeQueue->pReadFrom = ((pTypeQueue->pReadFrom >= pTypeQueue->pTail) ? pTypeQueue->pHead : pTypeQueue->pReadFrom);
+    }
+
+    return enumPushState;
+}
+
+/*
+ * Return:      æ˜¯å¦å‡ºé˜ŸæˆåŠŸçŠ¶æ€
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ; *ppHead: å¾…å‡ºé˜Ÿæ•°æ®ç¼“å­˜æŒ‡é’ˆ; iLength: ç¼“å­˜é•¿åº¦
+ * Description: å‡ºé˜Ÿä¸€ç³»åˆ—æ•°æ®
+ */
+enumQueueState enumQueuePopDatas(QueueType *pTypeQueue, void *pvBuff, int32_t iLength)
+{
+    uint8_t *pucHandle = pvBuff;
+
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
+        return queueNull;
+
+    if(pvBuff == NULL)
+        return queueError;
+
+    if(iQueueGetLengthOfOccupy(pTypeQueue) < iLength)
+        return queueError;
+
+    while((iLength--) > 0)
+    {
+        *pucHandle++ = *pTypeQueue->pReadFrom++;
         pTypeQueue->pReadFrom = ((pTypeQueue->pReadFrom >= pTypeQueue->pTail) ? pTypeQueue->pHead : pTypeQueue->pReadFrom);
     }
 
@@ -283,21 +357,21 @@ enumQueueState enumQueuePushDatas(QueueType *pTypeQueue, void *pvBuff, int32_t i
 }
 
 /*
- * Return:      ÊÇ·ñ³ö¶Ó³É¹¦×´Ì¬
- * Parameters:  *pTypeQueue: ¶ÓÁÐ½á¹¹ÌåÖ¸Õë; *ppHead: ´ý³ö¶ÓÊý¾Ý»º´æÖ¸Õë; iLength: »º´æ³¤¶È
- * Description: ³ö¶ÓÒ»ÏµÁÐÊý¾Ý
+ * Return:      æ˜¯å¦å‡ºé˜ŸæˆåŠŸçŠ¶æ€
+ * Parameters:  *pTypeQueue: é˜Ÿåˆ—ç»“æž„ä½“æŒ‡é’ˆ; *ppHead: å¾…å‡ºé˜Ÿæ•°æ®ç¼“å­˜æŒ‡é’ˆ; iLength: ç¼“å­˜é•¿åº¦; ucByte: æŒ‡å®šçš„æœ‰æ•ˆå­—èŠ‚
+ * Description: å‡ºé˜Ÿä¸€ç³»åˆ—æ•°æ®ï¼Œéœ€è¦æœ‰æŒ‡å®šçš„æœ‰æ•ˆå­—èŠ‚
  */
-enumQueueState enumQueuePopDatas(QueueType *pTypeQueue, void *pvBuff, int32_t iLength, uint8_t ucByte)
+enumQueueState enumQueuePopDatasNeed(QueueType *pTypeQueue, void *pvBuff, int32_t iLength, uint8_t ucByte)
 {
     uint8_t *pucHandle = pvBuff;
 
-    if(pTypeQueue == NULL)
+    if((pTypeQueue == NULL) || (pTypeQueue->pHead == NULL))
         return queueNull;
 
     if(pvBuff == NULL)
         return queueError;
 
-    if(iQueueGetLengthOfOccupy(pTypeQueue, ucByte) < iLength)
+    if(iQueueGetLengthOfOccupyNeed(pTypeQueue, ucByte) < iLength)
         return queueError;
 
     while((iLength--) > 0)

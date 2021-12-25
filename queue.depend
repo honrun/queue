@@ -15,15 +15,15 @@
 	"stdlib.h"
 	"DevicesQueue.h"
 
-1640165097 source:d:\debug_project\c\queue\devicesqueue.c
+1640404692 source:d:\debug_project\c\queue\devicesqueue.c
 	"stdint.h"
 	"stdio.h"
 	"string.h"
 	"DevicesQueue.h"
 
-1640164670 d:\debug_project\c\queue\devicesqueue.h
+1640404963 d:\debug_project\c\queue\devicesqueue.h
 
-1640173986 source:d:\debug_project\c\queue\main.c
+1640404351 source:d:\debug_project\c\queue\main.c
 	"stdint.h"
 	"stdio.h"
 	"string.h"

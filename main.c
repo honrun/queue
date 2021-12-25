@@ -12,6 +12,7 @@ int main(void)
     uint8_t ucPushDatas[1024] = {0}, ucPopDatas[1024] = {0};
     uint16_t x = 0, y = 0;
 
+
     printf("Hello Queue test.\r\n\n");
 
     enumQueueInit();
@@ -26,19 +27,23 @@ int main(void)
 
         if(x & 1)
         {
-            printf("Push: %02d,\tOccupy length: %d,\tRemaining length: %d\r\n", y, iQueueGetLengthOfOccupy(&g_TypeQueueKeyInput, 0), iQueueGetLengthOfRemaining(&g_TypeQueueKeyInput));
-            printf("Data: %s\r\n\n", g_TypeQueueKeyInput.pHead);
-
-            /* Èë¶Ó²âÊÔ */
+            /* å…¥é˜Ÿæµ‹è¯• */
             enumQueuePushDatas(&g_TypeQueueKeyInput, ucPushDatas, y);
+
+            printf("Push: %02d,\tOccupy length: %d,\tRemaining length: %d\r\n", y, iQueueGetLengthOfOccupy(&g_TypeQueueKeyInput), iQueueGetLengthOfRemaining(&g_TypeQueueKeyInput));
+            printf("Head \t%08X Data: %s\r\n", g_TypeQueueKeyInput.pHead, g_TypeQueueKeyInput.pHead);
+            printf("Read \t%08X Data: %s\r\n", g_TypeQueueKeyInput.pReadFrom, g_TypeQueueKeyInput.pReadFrom);
+            printf("Write \t%08X Data: %s\r\n\n", g_TypeQueueKeyInput.pWriteTo, g_TypeQueueKeyInput.pWriteTo);
         }
         else
         {
-            printf("Pop: %02d,\tOccupy length: %d,\tRemaining length: %d\r\n", y, iQueueGetLengthOfOccupy(&g_TypeQueueKeyInput, 0), iQueueGetLengthOfRemaining(&g_TypeQueueKeyInput));
-            printf("Data: %s\r\n\n", g_TypeQueueKeyInput.pHead);
+            /* å‡ºé˜Ÿæµ‹è¯• */
+            enumQueuePopDatas(&g_TypeQueueKeyInput, ucPopDatas, y);
 
-            /* ³ö¶Ó²âÊÔ */
-            enumQueuePopDatas(&g_TypeQueueKeyInput, ucPopDatas, y, 0);
+            printf("Pop: %02d,\tOccupy length: %d,\tRemaining length: %d\r\n", y, iQueueGetLengthOfOccupy(&g_TypeQueueKeyInput), iQueueGetLengthOfRemaining(&g_TypeQueueKeyInput));
+            printf("Head \t%08X Data: %s\r\n", g_TypeQueueKeyInput.pHead, g_TypeQueueKeyInput.pHead);
+            printf("Read \t%08X Data: %s\r\n", g_TypeQueueKeyInput.pReadFrom, g_TypeQueueKeyInput.pReadFrom);
+            printf("Write \t%08X Data: %s\r\n\n", g_TypeQueueKeyInput.pWriteTo, g_TypeQueueKeyInput.pWriteTo);
         }
     }
 

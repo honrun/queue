@@ -9,14 +9,14 @@
 
 
 
-/* 使x对n字节对齐 */
+/* 浣縳瀵筺瀛楄妭瀵归綈 */
 #define queueRoundUp(x, n) (((x) + (n) - 1) & (~((n) - 1)))
 
 
 
-/* 覆盖模式 */
+/* 瑕嗙洊妯″紡 */
 #define QUEUE_MODE_NORMAL 0
-/* 锁定模式 */
+/* 閿佸畾妯″紡 */
 #define QUEUE_MODE_LOCK   1
 
 #define QUEUE_MODE QUEUE_MODE_NORMAL
@@ -28,11 +28,11 @@
 
 
 typedef enum {
-    queueNull = 0,
-    queueNormal,
+    queueNormal = 0,
+    queueError,
+    queueNull,
     queueEmpty,
     queueFull,
-    queueError,
 }enumQueueState;
 
 
@@ -59,12 +59,14 @@ enumQueueState enumQueueInit(void);
 enumQueueState enumQueueCreate(QueueType *pTypeQueue, char *pcName, uint8_t *pucBuff, int32_t iLength);
 enumQueueState enumQueueGetState(QueueType *pTypeQueue);
 enumQueueState enumQueueSetState(QueueType *pTypeQueue, enumQueueState enumState);
-int32_t iQueueGetLengthOfOccupy(QueueType *pTypeQueue, uint8_t ucByte);
+int32_t iQueueGetLengthOfOccupy(QueueType *pTypeQueue);
+int32_t iQueueGetLengthOfOccupyNeed(QueueType *pTypeQueue, uint8_t ucByte);
 int32_t iQueueGetLengthOfSeparetor(QueueType *pTypeQueue, uint8_t ucByte);
 int32_t iQueueGetLengthOfRemaining(QueueType *pTypeQueue);
 enumQueueState enumQueuePushByte(QueueType *pTypeQueue, uint8_t ucData);
 enumQueueState enumQueuePopByte(QueueType *pTypeQueue, uint8_t *pucData);
 enumQueueState enumQueuePushDatas(QueueType *pTypeQueue, void *pvBuff, int32_t iLength);
-enumQueueState enumQueuePopDatas(QueueType *pTypeQueue, void *pvBuff, int32_t iLength, uint8_t ucByte);
+enumQueueState enumQueuePopDatas(QueueType *pTypeQueue, void *pvBuff, int32_t iLength);
+enumQueueState enumQueuePopDatasNeed(QueueType *pTypeQueue, void *pvBuff, int32_t iLength, uint8_t ucByte);
 
 #endif
